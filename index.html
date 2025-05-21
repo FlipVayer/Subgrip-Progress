@@ -338,78 +338,55 @@
     totalXP += baseTricks[index].xp;
     currentTrickIndex++;
 
-    updateUserPanel();
+        updateUserPanel();
     createTrickList();
   }
 
-  // Función para manejar grabación video simple (demo)
+  // Setup cámara para grabar video
   async function startRecording() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert("Tu navegador no soporta grabación de video.");
-      return;
-    }
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       videoPreview.srcObject = stream;
       videoPreview.style.display = 'block';
 
-      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      mediaRecorder = new MediaRecorder(stream);
       recordedChunks = [];
 
-      mediaRecorder.ondataavailable = e => {
+      mediaRecorder.ondataavailable = function(e) {
         if (e.data.size > 0) recordedChunks.push(e.data);
       };
 
-      mediaRecorder.onstop = () => {
-        const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
-        const videoURL = URL.createObjectURL(videoBlob);
+      mediaRecorder.onstop = function() {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        // Aquí puedes subirlo a servidor o analizarlo luego
+        console.log("Video grabado:", url);
+        // Stop camera
+        stream.getTracks().forEach(track => track.stop());
         videoPreview.srcObject = null;
-        videoPreview.src = videoURL;
-        videoPreview.controls = true;
-
-        // Aquí iría la lógica para enviar video a IA o validarlo
-        alert('Video grabado, ¡próximamente IA validará tu truco!');
+        videoPreview.style.display = 'none';
       };
 
       mediaRecorder.start();
 
-      // Cambiar botón para detener grabación
-      recordBtn.textContent = 'Detener Grabación';
-      recordBtn.onclick = stopRecording;
-
-      // Stop recording en 10 segundos máximo
+      // Grabación de 5 segundos por ahora
       setTimeout(() => {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-          stopRecording();
-        }
-      }, 10000);
-    } catch (error) {
-      alert('Error al acceder a la cámara: ' + error.message);
+        mediaRecorder.stop();
+      }, 5000);
+
+    } catch (err) {
+      alert('No se pudo acceder a la cámara 😞');
+      console.error(err);
     }
   }
 
-  function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      mediaRecorder.stop();
-      // Parar la cámara
-      const stream = videoPreview.srcObject;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      recordBtn.textContent = 'Grabar Truco';
-      recordBtn.onclick = startRecording;
-    }
-  }
+  // Eventos
+  recordBtn.addEventListener('click', startRecording);
 
-  // Evento inicial botón grabar
-  recordBtn.onclick = startRecording;
-
-  // Inicialización app
+  // Inicialización
   updateUserPanel();
   createTrickList();
-
 </script>
-
 </body>
 </html>
+
