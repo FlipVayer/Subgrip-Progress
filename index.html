@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Subgrip Progress</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #000; /* negro total */
+    color: #56ccf2; /* celeste chill */
+    margin: 0;
+    padding: 0 0 60px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  /* PANEL USUARIO */
+  #userPanel {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #000d18; /* negro azul oscuro */
+    padding: 15px 20px;
+    border-radius: 12px;
+    width: 240px;
+    box-shadow: 0 8px 15px #05668d;
+    user-select: none;
+    z-index: 9999;
+  }
+  #userPanel h2 {
+    margin: 0 0 5px 0;
+    font-size: 1.7rem;
+    color: #56ccf2;
+  }
+  #userPanel p {
+    margin: 5px 0;
+    font-weight: 600;
+    color: #56ccf2;
+  }
+  #xpBarContainer {
+    background: #003554;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 14px;
+    margin: 8px 0 15px 0;
+  }
+  #xpBar {
+    height: 100%;
+    background: #56ccf2;
+    width: 0%;
+    transition: width 0.5s ease-in-out;
+  }
+  #recordBtn {
+    background: #05668d;
+    border: none;
+    color: white;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.3s ease;
+  }
+  #recordBtn:hover {
+    background: #2ea3f2;
+  }
+  #videoPreview {
+    margin-top: 15px;
+    width: 100%;
+    border-radius: 10px;
+    display: none;
+  }
+
+  /* CONTENEDOR GENERAL */
+  main {
+    max-width: 900px;
+    margin-top: 110px;
+    padding: 0 20px 80px 20px;
+    width: 100%;
+  }
+  h1 {
+    text-align: center;
+    font-size: 3rem;
+    margin-bottom: 40px;
+    font-weight: 900;
+    color: #56ccf2;
+    text-shadow: 0 0 10px #2ea3f2;
+  }
+
+  /* LOGO */
+  #logo {
+    display: block;
+    margin: 0 auto 25px auto;
+    width: 300px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px #56ccf2);
+  }
+
+  /* CAMINO DE TRUCOS */
+  #trickPath {
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+  }
+
+  /* Cada truco */
+  .trick {
+    background: #001f2f; /* negro azul */
+    border-radius: 15px;
+    padding: 25px 30px;
+    box-shadow: 0 5px 10px #003554;
+    transition: background 0.3s ease;
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 1.3rem;
+    color: #56ccf2;
+  }
+  /* Alterna alineacion izquierda/derecha */
+  .trick:nth-child(odd) {
+    align-self: flex-start;
+    max-width: 70%;
+  }
+  .trick:nth-child(even) {
+    align-self: flex-end;
+    max-width: 70%;
+  }
+
+  .trick h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #2ea3f2;
+  }
+  .trick p.desc {
+    margin: 0;
+    font-weight: 500;
+    color: #a0d8f7;
+  }
+  .trick p.xp {
+    font-weight: 700;
+    color: #56ccf2;
+  }
+
+  /* Estado activo */
+  .trick.active {
+    background: linear-gradient(135deg, #2ea3f2, #05668d);
+    color: white;
+    box-shadow: 0 6px 20px #56ccf2;
+  }
+  .trick.active p.desc,
+  .trick.active p.xp {
+    color: #d4f1f9;
+  }
+
+  /* Estado completado */
+  .trick.completed {
+    background: #003554;
+    color: #90cdfc;
+    box-shadow: 0 4px 15px #003554;
+  }
+  .trick.completed h3 {
+    text-decoration: line-through;
+    opacity: 0.8;
+  }
+
+  .trick button.completeBtn {
+    margin-top: 10px;
+    background: #2ea3f2;
+    border: none;
+    padding: 10px 15px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    align-self: flex-start;
+    color: #001f2f;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .trick button.completeBtn:hover {
+    background: #56ccf2;
+    color: #000;
+  }
+
+  /* Mensaje final */
+  #completionMsg {
+    text-align: center;
+    font-size: 2rem;
+    margin-top: 40px;
+    font-weight: 700;
+    color: #56ccf2;
+    text-shadow: 0 0 8px #2ea3f2;
+  }
+</style>
+</head>
+<body>
+
+<!-- PANEL USUARIO -->
+<div id="userPanel">
+  <h2>SubgripMaster</h2>
+  <p id="title">Novato</p>
+  <div id="xpBarContainer">
+    <div id="xpBar"></div>
+  </div>
+  <button id="recordBtn">Grabar Truco</button>
+  <video id="videoPreview" autoplay muted playsinline></video>
+</div>
+
+<main>
+  <img id="logo" src="Logo.png" alt="Logo Subgrip" />
+  <h1>Subgrip Progress</h1>
+  <div id="trickPath"></div>
+  <div id="completionMsg" style="display:none;">¡Felicidades! Completaste todos los trucos 🛹🔥</div>
+</main>
+
+<script>
+  // Trucos base
+  const baseTricks = [
+  { name: "Manual", desc: "Mantén el equilibrio solo en las ruedas traseras.", xp: 50 },
+  { name: "Ollie", desc: "El salto básico para despegar la tabla del suelo.", xp: 100 },
+  { name: "Shuvit", desc: "La tabla gira 180° bajo tus dedos.", xp: 120 },
+  { name: "Kickflip", desc: "La tabla da una voltereta lateral mientras saltas.", xp: 150 },
+  { name: "Heelflip", desc: "Similar al kickflip pero con el talón.", xp: 150 },
+  { name: "Pop Shuvit", desc: "Shuvit con un salto más alto y pop en la tabla.", xp: 170 },
+  { name: "Nollie", desc: "Ollie desde la parte frontal de la tabla.", xp: 160 },
+  { name: "Hardflip", desc: "Combina un frontside shove-it y un kickflip.", xp: 200 },
+  { name: "Varial Kickflip", desc: "Shuvit y kickflip combinados en un solo movimiento.", xp: 190 },
+  { name: "180 Ollie", desc: "Ollie girando tu cuerpo y tabla 180 grados.", xp: 180 },
+  { name: "50-50 Grind", desc: "Ambos trucks en la baranda o borde.", xp: 130 },
+  { name: "5-0 Grind", desc: "Solo el truck trasero grindea.", xp: 140 },
+  { name: "Nosegrind", desc: "Solo el truck delantero grindea.", xp: 140 },
+  { name: "Boardslide", desc: "La tabla desliza perpendicular a la baranda.", xp: 150 },
+  { name: "Lipslide", desc: "Tabla desliza por la baranda con el centro de la tabla.", xp: 160 },
+  { name: "Manual Flip", desc: "Manual + kickflip en una sola jugada.", xp: 210 },
+  { name: "Switch Ollie", desc: "Ollie haciendo stance contrario.", xp: 170 },
+  { name: "Switch Kickflip", desc: "Kickflip en stance opuesto.", xp: 220 },
+  { name: "Tre Flip", desc: "360 shove-it + kickflip, combo maestro.", xp: 280 },
+  { name: "Laser Flip", desc: "360 heelflip, puro flow advanced.", xp: 300 },
+  { name: "Impossible", desc: "Tabla da una vuelta vertical envolviendo el pie.", xp: 250 },
+  { name: "Dragonflip", desc: "Impossible + kickflip, leyenda callejera.", xp: 320 },
+  { name: "Bluntslide", desc: "Grind de truck trasero con tabla parada.", xp: 230 },
+  { name: "Smith Grind", desc: "Truck trasero grindea y la tabla se inclina.", xp: 210 },
+  { name: "Feeble Grind", desc: "Truck trasero grindea y tabla inclinada al otro lado.", xp: 210 },
+  { name: "Casper Flip", desc: "Truco flip con tabla en posición invertida.", xp: 270 },
+  { name: "Hospital Flip", desc: "Kickflip + shuvit + finger flip en combo.", xp: 290 },
+  { name: "Darkslide", desc: "Tabla desliza con grip tape abajo.", xp: 300 },
+  { name: "Backside Flip", desc: "Flip con giro backside completo.", xp: 280 },
+  { name: "Frontside Flip", desc: "Flip con giro frontside.", xp: 280 },
+];
+
+
+  // Variables globales
+  let totalXP = 0;
+  let currentTrickIndex = 0;
+  let mediaRecorder = null;
+  let recordedChunks = [];
+
+  // ELEMENTOS DOM
+  const xpBar = document.getElementById('xpBar');
+  const titleLabel = document.getElementById('title');
+  const trickPath = document.getElementById('trickPath');
+  const completionMsg = document.getElementById('completionMsg');
+  const recordBtn = document.getElementById('recordBtn');
+  const videoPreview = document.getElementById('videoPreview');
+
+  // Función para calcular nivel según XP
+  function calculateLevel(xp) {
+    // Nivel = raíz cuadrada del XP dividido por 10 (ajustable)
+    return Math.floor(Math.sqrt(xp) / 10);
+  }
+
+  // Función para obtener título según nivel
+  function getTitleByLevel(level) {
+    if (level < 1) return "Novato";
+    if (level < 3) return "Apasionado";
+    if (level < 5) return "Técnico";
+    if (level < 7) return "Pro";
+    if (level < 10) return "Maestro";
+    return "Leyenda Subgrip";
+  }
+
+  // Actualizar panel de usuario y barra XP
+  function updateUserPanel() {
+    const level = calculateLevel(totalXP);
+    titleLabel.textContent = getTitleByLevel(level);
+
+    // XP para el siguiente nivel = (nivel + 1)^2 * 100
+    const nextLevelXP = Math.pow(level + 1, 2) * 100;
+    const prevLevelXP = Math.pow(level, 2) * 100;
+    const xpProgress = ((totalXP - prevLevelXP) / (nextLevelXP - prevLevelXP)) * 100;
+    xpBar.style.width = `${Math.min(xpProgress, 100)}%`;
+  }
+
+  // Crear la lista de trucos
+  function createTrickList() {
+    trickPath.innerHTML = '';
+    baseTricks.forEach((trick, index) => {
+      const trickDiv = document.createElement('div');
+      trickDiv.classList.add('trick');
+
+      if (index === currentTrickIndex) {
+        trickDiv.classList.add('active');
+      } else if (index < currentTrickIndex) {
+        trickDiv.classList.add('completed');
+      }
+
+      trickDiv.innerHTML = `
+        <h3>${trick.name}</h3>
+        <p class="desc">${trick.desc}</p>
+        <p class="xp">XP: ${trick.xp}</p>
+      `;
+
+      if (index === currentTrickIndex) {
+        const completeBtn = document.createElement('button');
+        completeBtn.classList.add('completeBtn');
+        completeBtn.textContent = 'Marcar como completado';
+        completeBtn.addEventListener('click', () => completeTrick(index));
+        trickDiv.appendChild(completeBtn);
+      }
+
+      trickPath.appendChild(trickDiv);
+    });
+
+    if (currentTrickIndex >= baseTricks.length) {
+      completionMsg.style.display = 'block';
+    } else {
+      completionMsg.style.display = 'none';
+    }
+  }
+
+  // Función para completar truco
+  function completeTrick(index) {
+    if (index !== currentTrickIndex) return;
+
+    totalXP += baseTricks[index].xp;
+    currentTrickIndex++;
+
+    updateUserPanel();
+    createTrickList();
+  }
+
+  // Función para manejar grabación video simple (demo)
+  async function startRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Tu navegador no soporta grabación de video.");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      videoPreview.srcObject = stream;
+      videoPreview.style.display = 'block';
+
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      recordedChunks = [];
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        const videoURL = URL.createObjectURL(videoBlob);
+        videoPreview.srcObject = null;
+        videoPreview.src = videoURL;
+        videoPreview.controls = true;
+
+        // Aquí iría la lógica para enviar video a IA o validarlo
+        alert('Video grabado, ¡próximamente IA validará tu truco!');
+      };
+
+      mediaRecorder.start();
+
+      // Cambiar botón para detener grabación
+      recordBtn.textContent = 'Detener Grabación';
+      recordBtn.onclick = stopRecording;
+
+      // Stop recording en 10 segundos máximo
+      setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          stopRecording();
+        }
+      }, 10000);
+    } catch (error) {
+      alert('Error al acceder a la cámara: ' + error.message);
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      // Parar la cámara
+      const stream = videoPreview.srcObject;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      recordBtn.textContent = 'Grabar Truco';
+      recordBtn.onclick = startRecording;
+    }
+  }
+
+  // Evento inicial botón grabar
+  recordBtn.onclick = startRecording;
+
+  // Inicialización app
+  updateUserPanel();
+  createTrickList();
+
+</script>
+
+</body>
+</html>
